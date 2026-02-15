@@ -10,6 +10,8 @@ export interface TaskFrontmatter {
   timeEstimate?: number;
   recurrence?: string;
   recurrenceAnchor?: string;
+  completeInstances?: string[];
+  skippedInstances?: string[];
   completedDate?: string;
   dateCreated: string;
   dateModified?: string;

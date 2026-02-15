@@ -16,6 +16,8 @@ export type FieldRole =
   | "dateModified"
   | "recurrence"
   | "recurrenceAnchor"
+  | "completeInstances"
+  | "skippedInstances"
   | "timeEntries";
 
 const ALL_ROLES: FieldRole[] = [
@@ -33,12 +35,16 @@ const ALL_ROLES: FieldRole[] = [
   "dateModified",
   "recurrence",
   "recurrenceAnchor",
+  "completeInstances",
+  "skippedInstances",
   "timeEntries",
 ];
 
 export interface FieldMapping {
   roleToField: Record<FieldRole, string>;
   fieldToRole: Record<string, FieldRole>;
+  displayNameKey: string;
+  completedStatuses: string[];
 }
 
 /**
@@ -53,7 +59,12 @@ export function defaultFieldMapping(): FieldMapping {
     fieldToRole[role] = role;
   }
 
-  return { roleToField, fieldToRole };
+  return {
+    roleToField,
+    fieldToRole,
+    displayNameKey: "title",
+    completedStatuses: ["done", "cancelled"],
+  };
 }
 
 /**
@@ -61,7 +72,10 @@ export function defaultFieldMapping(): FieldMapping {
  * bidirectional mapping. Falls back to identity if the field name itself
  * matches a known role.
  */
-export function buildFieldMapping(fields: Record<string, any>): FieldMapping {
+export function buildFieldMapping(
+  fields: Record<string, any>,
+  displayNameKey?: string,
+): FieldMapping {
   const roleToField = {} as Record<FieldRole, string>;
   const fieldToRole = {} as Record<string, FieldRole>;
   const rolesSet = new Set<string>(ALL_ROLES);
@@ -96,7 +110,53 @@ export function buildFieldMapping(fields: Record<string, any>): FieldMapping {
     }
   }
 
-  return { roleToField, fieldToRole };
+  const completedStatuses = inferCompletedStatuses(fields, roleToField.status);
+
+  return {
+    roleToField,
+    fieldToRole,
+    displayNameKey:
+      displayNameKey && typeof displayNameKey === "string" && displayNameKey.trim().length > 0
+        ? displayNameKey
+        : roleToField.title,
+    completedStatuses,
+  };
+}
+
+function inferCompletedStatuses(fields: Record<string, any>, statusFieldName: string): string[] {
+  const statusDef = fields[statusFieldName];
+  if (!statusDef || typeof statusDef !== "object") {
+    return ["done", "cancelled"];
+  }
+
+  if (Array.isArray(statusDef.tn_completed_values)) {
+    const explicit = statusDef.tn_completed_values
+      .filter((v: unknown): v is string => typeof v === "string")
+      .map((v: string) => v.trim())
+      .filter((v: string) => v.length > 0);
+    if (explicit.length > 0) return explicit;
+  }
+
+  if (Array.isArray(statusDef.values)) {
+    const inferred = statusDef.values
+      .filter((v: unknown): v is string => typeof v === "string")
+      .filter((v: string) => {
+        const lower = v.toLowerCase();
+        return lower.includes("done") || lower.includes("complete") || lower.includes("cancel");
+      });
+    if (inferred.length > 0) return inferred;
+  }
+
+  return ["done", "cancelled"];
+}
+
+export function isCompletedStatus(mapping: FieldMapping, status: string | undefined): boolean {
+  if (!status) return false;
+  return mapping.completedStatuses.includes(status);
+}
+
+export function getDefaultCompletedStatus(mapping: FieldMapping): string {
+  return mapping.completedStatuses[0] || "done";
 }
 
 /**
@@ -114,7 +174,14 @@ export async function loadFieldMapping(flagPath?: string): Promise<FieldMapping>
     if (!typeResult.valid || !typeResult.type) {
       return defaultFieldMapping();
     }
-    return buildFieldMapping(typeResult.type.fields || {});
+    const displayNameKey =
+      typeof (typeResult.type as any).display_name_key === "string"
+        ? (typeResult.type as any).display_name_key
+        : typeof (typeResult.type as any).displayNameKey === "string"
+          ? (typeResult.type as any).displayNameKey
+          : undefined;
+
+    return buildFieldMapping(typeResult.type.fields || {}, displayNameKey);
   } catch {
     return defaultFieldMapping();
   }
@@ -161,4 +228,28 @@ export function denormalizeFrontmatter(
  */
 export function resolveField(mapping: FieldMapping, role: FieldRole): string {
   return mapping.roleToField[role];
+}
+
+
+/**
+ * Resolve the display title for a task based on type `display_name_key`.
+ * Falls back to the canonical `title` role when absent.
+ */
+export function resolveDisplayTitle(
+  frontmatter: Record<string, unknown>,
+  mapping: FieldMapping,
+): string | undefined {
+  const mappedKey = mapping.fieldToRole[mapping.displayNameKey] === "title"
+    ? "title"
+    : mapping.displayNameKey;
+
+  const candidates = [mappedKey, "title"];
+  for (const key of candidates) {
+    const value = frontmatter[key];
+    if (typeof value === "string" && value.trim().length > 0) {
+      return value;
+    }
+  }
+
+  return undefined;
 }

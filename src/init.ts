@@ -33,6 +33,10 @@ export function buildMdbaseYaml(): string {
 
 export function buildTaskTypeDef(opts: InitOptions = {}): string {
   const o = { ...DEFAULTS, ...opts };
+  const completedStatuses = o.statuses.filter((s) => {
+    const lower = s.toLowerCase();
+    return lower.includes("done") || lower.includes("complete") || lower.includes("cancel");
+  });
   const lines: string[] = [];
 
   lines.push("---");
@@ -61,6 +65,9 @@ export function buildTaskTypeDef(opts: InitOptions = {}): string {
   lines.push(`    values: [${o.statuses.join(", ")}]`);
   lines.push(`    default: ${o.defaultStatus}`);
   lines.push("    tn_role: status");
+  if (completedStatuses.length > 0) {
+    lines.push(`    tn_completed_values: [${completedStatuses.join(", ")}]`);
+  }
 
   // priority
   lines.push("  priority:");
@@ -125,6 +132,16 @@ export function buildTaskTypeDef(opts: InitOptions = {}): string {
   lines.push("    values: [scheduled, completion]");
   lines.push("    default: scheduled");
   lines.push("    tn_role: recurrenceAnchor");
+  lines.push("  completeInstances:");
+  lines.push("    type: list");
+  lines.push("    items:");
+  lines.push("      type: date");
+  lines.push("    tn_role: completeInstances");
+  lines.push("  skippedInstances:");
+  lines.push("    type: list");
+  lines.push("    items:");
+  lines.push("      type: date");
+  lines.push("    tn_role: skippedInstances");
 
   // time entries
   lines.push("  timeEntries:");

@@ -27,6 +27,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "start": "node dist/cli.js",
+    "test:tz-parity": "npm run build && ./scripts/test-tz-parity.sh",
     "prepublishOnly": "tsup"
   },
   "dependencies": {
@@ -34,7 +35,8 @@
     "commander": "^12.1.0",
     "chalk": "^4.1.2",
     "date-fns": "^4.1.0",
-    "ora": "^5.4.1"
+    "ora": "^5.4.1",
+    "rrule": "^2.8.1"
   },
   "devDependencies": {
     "tasknotes-nlp-core": "^0.1.0",

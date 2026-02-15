@@ -1,9 +1,9 @@
 import chalk from "chalk";
-import { format } from "date-fns";
 import { withCollection } from "../collection.js";
-import { formatTask, showError } from "../format.js";
-import { normalizeFrontmatter, resolveField } from "../field-mapping.js";
+import { formatTask, formatTaskForDate, showError } from "../format.js";
+import { normalizeFrontmatter, resolveDisplayTitle, resolveField } from "../field-mapping.js";
 import type { TaskResult } from "../types.js";
+import { isBeforeDateSafe, resolveDateOrToday, validateDateString } from "../date.js";
 
 export async function listCommand(options: {
   path?: string;
@@ -13,10 +13,12 @@ export async function listCommand(options: {
   due?: string;
   overdue?: boolean;
   where?: string;
+  on?: string;
   limit?: string;
   json?: boolean;
 }): Promise<void> {
   try {
+    const asOfDate = options.on ? validateDateString(options.on) : resolveDateOrToday();
     await withCollection(async (collection, mapping) => {
       // Build where expression from flags
       const conditions: string[] = [];
@@ -30,10 +32,10 @@ export async function listCommand(options: {
         const tagsField = resolveField(mapping, "tags");
         const dueField = resolveField(mapping, "due");
 
-        if (options.status) {
+        if (options.status && !options.on) {
           conditions.push(`${statusField} == "${options.status}"`);
         } else if (!options.overdue) {
-          // Default: non-completed tasks
+          // Default: non-completed tasks. Recurring tasks use completeInstances for per-day completion.
           conditions.push(`${statusField} != "done" && ${statusField} != "cancelled"`);
         }
 
@@ -50,8 +52,7 @@ export async function listCommand(options: {
         }
 
         if (options.overdue) {
-          const today = format(new Date(), "yyyy-MM-dd");
-          conditions.push(`${dueField} < "${today}" && ${statusField} != "done" && ${statusField} != "cancelled"`);
+          conditions.push(`${dueField} != null && ${statusField} != "done" && ${statusField} != "cancelled"`);
         }
       }
 
@@ -65,7 +66,40 @@ export async function listCommand(options: {
         limit,
       });
 
-      const tasks = (result.results || []) as TaskResult[];
+      const rawTasks = (result.results || []) as TaskResult[];
+      const today = asOfDate;
+      const tasks = rawTasks.filter((task) => {
+        const fm = normalizeFrontmatter(task.frontmatter as Record<string, unknown>, mapping);
+        if (options.overdue) {
+          if (fm.status === "done" || fm.status === "cancelled") return false;
+          if (typeof fm.due !== "string" || fm.due.trim().length === 0) return false;
+          if (!isBeforeDateSafe(fm.due, today)) return false;
+        }
+
+        const isRecurring = typeof fm.recurrence === "string" && fm.recurrence.trim().length > 0;
+        if (!isRecurring) {
+          if (!options.status) return true;
+          return String(fm.status || "") === options.status;
+        }
+
+        const completeInstances = Array.isArray(fm.completeInstances)
+          ? (fm.completeInstances as string[])
+          : [];
+        const skippedInstances = Array.isArray(fm.skippedInstances)
+          ? (fm.skippedInstances as string[])
+          : [];
+        const effectiveStatus = completeInstances.includes(today)
+          ? "done"
+          : skippedInstances.includes(today)
+            ? "cancelled"
+            : "open";
+
+        if (options.status) {
+          return effectiveStatus === options.status;
+        }
+
+        return effectiveStatus !== "done" && effectiveStatus !== "cancelled";
+      });
 
       if (options.json) {
         const clean = tasks.map((t: any) => {
@@ -86,7 +120,15 @@ export async function listCommand(options: {
 
       for (const task of tasks) {
         const fm = normalizeFrontmatter(task.frontmatter as Record<string, unknown>, mapping);
-        console.log(formatTask({ ...task, frontmatter: fm as any }));
+        const displayTitle = resolveDisplayTitle(fm, mapping);
+        if (displayTitle) {
+          fm.title = displayTitle;
+        }
+        if (options.on) {
+          console.log(formatTaskForDate({ ...task, frontmatter: fm as any }, asOfDate));
+        } else {
+          console.log(formatTask({ ...task, frontmatter: fm as any }));
+        }
       }
 
       if (result.meta?.has_more) {

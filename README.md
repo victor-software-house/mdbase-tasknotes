@@ -46,12 +46,14 @@ mtn timer log --period today
 |---|---|
 | `mtn init [path]` | Initialize a new collection with `mdbase.yaml` and `_types/task.md` |
 | `mtn create <text...>` | Create a task from natural language |
-| `mtn list` | List tasks with filters (`--status`, `--priority`, `--tag`, `--due`, `--overdue`, `--where`, `--json`) |
-| `mtn show <task>` | Show full task detail |
-| `mtn complete <task>` | Mark a task as done |
+| `mtn list` | List tasks with filters (`--status`, `--priority`, `--tag`, `--due`, `--overdue`, `--where`, `--on`, `--json`) |
+| `mtn show <task>` | Show full task detail (`--on YYYY-MM-DD` for recurring instance state) |
+| `mtn complete <task>` | Mark a task as done (`--date YYYY-MM-DD` for recurring instance completion) |
 | `mtn update <task>` | Update fields (`--status`, `--priority`, `--due`, `--title`, `--add-tag`, `--remove-tag`) |
 | `mtn delete <task>` | Delete a task (`--force` to skip backlink check) |
 | `mtn archive <task>` | Add archive tag to a task |
+| `mtn skip <task>` | Skip a recurring instance (`--date YYYY-MM-DD`, default today) |
+| `mtn unskip <task>` | Unskip a recurring instance (`--date YYYY-MM-DD`, default today) |
 | `mtn search <query>` | Full-text search across tasks |
 | `mtn timer start\|stop\|status\|log` | Time tracking |
 | `mtn projects [list\|show]` | List projects and their tasks |

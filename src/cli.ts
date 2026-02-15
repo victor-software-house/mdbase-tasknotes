@@ -18,6 +18,7 @@ import { projectsListCommand, projectsShowCommand } from "./commands/projects.js
 import { statsCommand } from "./commands/stats.js";
 import { interactiveCommand } from "./commands/interactive.js";
 import { configCommand } from "./commands/config.js";
+import { skipCommand, unskipCommand } from "./commands/skip.js";
 
 const program = new Command();
 
@@ -54,6 +55,7 @@ program
   .option("-d, --due <date>", "Filter by due date")
   .option("--overdue", "Show overdue tasks")
   .option("-w, --where <expr>", "Raw mdbase where expression")
+  .option("--on <date>", "Evaluate recurring instance state on date (YYYY-MM-DD)")
   .option("-l, --limit <n>", "Maximum results")
   .option("--json", "Output as JSON")
   .action((opts: any) => {
@@ -65,9 +67,10 @@ program
 program
   .command("show <pathOrTitle>")
   .description("Show full task detail")
-  .action((pathOrTitle: string) => {
+  .option("--on <date>", "Show recurring instance state on date (YYYY-MM-DD)")
+  .action((pathOrTitle: string, opts: any) => {
     const parentOpts = program.opts();
-    return showCommand(pathOrTitle, { path: parentOpts.path });
+    return showCommand(pathOrTitle, { ...opts, path: parentOpts.path });
   });
 
 // Complete
@@ -75,9 +78,10 @@ program
   .command("complete <pathOrTitle>")
   .alias("done")
   .description("Mark a task as completed")
-  .action((pathOrTitle: string) => {
+  .option("-d, --date <date>", "Recurring instance date in YYYY-MM-DD (default: today)")
+  .action((pathOrTitle: string, opts: any) => {
     const parentOpts = program.opts();
-    return completeCommand(pathOrTitle, { path: parentOpts.path });
+    return completeCommand(pathOrTitle, { ...opts, path: parentOpts.path });
   });
 
 // Update
@@ -123,6 +127,26 @@ program
   .action((pathOrTitle: string) => {
     const parentOpts = program.opts();
     return archiveCommand(pathOrTitle, { path: parentOpts.path });
+  });
+
+// Skip recurring instance
+program
+  .command("skip <pathOrTitle>")
+  .description("Skip a recurring task instance")
+  .option("-d, --date <date>", "Instance date in YYYY-MM-DD (default: today)")
+  .action((pathOrTitle: string, opts: any) => {
+    const parentOpts = program.opts();
+    return skipCommand(pathOrTitle, { ...opts, path: parentOpts.path });
+  });
+
+// Unskip recurring instance
+program
+  .command("unskip <pathOrTitle>")
+  .description("Unskip a recurring task instance")
+  .option("-d, --date <date>", "Instance date in YYYY-MM-DD (default: today)")
+  .action((pathOrTitle: string, opts: any) => {
+    const parentOpts = program.opts();
+    return unskipCommand(pathOrTitle, { ...opts, path: parentOpts.path });
   });
 
 // Search

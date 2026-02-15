@@ -1,7 +1,8 @@
 import chalk from "chalk";
-import { format as fmtDate, isPast, isToday, parseISO } from "date-fns";
+import { format as fmtDate, isPast, parseISO } from "date-fns";
 import type { TaskFrontmatter, TaskResult } from "./types.js";
 import { extractProjectNames } from "./mapper.js";
+import { getCurrentDateString, isSameDateSafe, parseDateToLocal } from "./date.js";
 
 const STATUS_ICONS: Record<string, string> = {
   open: "☐",
@@ -43,8 +44,8 @@ function statusColor(status: string): (s: string) => string {
 export function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return "";
   try {
-    const date = parseISO(dateStr);
-    if (isToday(date)) return chalk.cyan("today");
+    if (isSameDateSafe(dateStr, getCurrentDateString())) return chalk.cyan("today");
+    const date = parseDateToLocal(dateStr);
     if (isPast(date)) return chalk.red(fmtDate(date, "yyyy-MM-dd"));
     return fmtDate(date, "yyyy-MM-dd");
   } catch {
@@ -60,11 +61,16 @@ export function formatDuration(minutes: number): string {
 }
 
 export function formatTask(task: TaskResult): string {
+  return formatTaskForDate(task, todayString());
+}
+
+export function formatTaskForDate(task: TaskResult, date: string): string {
   const fm = task.frontmatter;
   const parts: string[] = [];
+  const effectiveStatus = getEffectiveStatus(fm, date);
 
   // Status icon
-  parts.push(getStatusIcon(fm.status));
+  parts.push(getStatusIcon(effectiveStatus));
 
   // Priority badge
   if (fm.priority && fm.priority !== "normal") {
@@ -110,18 +116,28 @@ export function formatTask(task: TaskResult): string {
 }
 
 export function formatTaskDetail(task: TaskResult): string {
+  return formatTaskDetailForDate(task, todayString());
+}
+
+export function formatTaskDetailForDate(task: TaskResult, date?: string): string {
+  const asOfDate = date ?? todayString();
+  return formatTaskDetailInternal(task, asOfDate);
+}
+
+function formatTaskDetailInternal(task: TaskResult, asOfDate: string): string {
   const fm = task.frontmatter;
   const lines: string[] = [];
+  const effectiveStatus = getEffectiveStatus(fm, asOfDate);
 
   // Header
   lines.push(
-    `${getStatusIcon(fm.status)} ${chalk.bold(fm.title)}`,
+    `${getStatusIcon(effectiveStatus)} ${chalk.bold(fm.title)}`,
   );
   lines.push(chalk.dim("─".repeat(60)));
 
   // Status & Priority
   lines.push(
-    `  Status:   ${statusColor(fm.status)(fm.status)}`,
+    `  Status:   ${statusColor(effectiveStatus)(effectiveStatus)}`,
   );
   if (fm.priority) {
     lines.push(
@@ -153,6 +169,12 @@ export function formatTaskDetail(task: TaskResult): string {
   }
   if (fm.recurrence) {
     lines.push(`  Recurs:   ${fm.recurrence}`);
+  }
+  if (fm.recurrence && Array.isArray(fm.completeInstances)) {
+    const completed = fm.completeInstances.includes(asOfDate);
+    const skipped = Array.isArray(fm.skippedInstances) && fm.skippedInstances.includes(asOfDate);
+    const label = skipped ? chalk.gray("skipped") : completed ? chalk.green("completed") : chalk.yellow("open");
+    lines.push(`  Instance (${asOfDate}): ${label}`);
   }
 
   // Time entries
@@ -195,4 +217,17 @@ export function showWarning(msg: string): void {
 
 export function showInfo(msg: string): void {
   console.log(chalk.blue("ℹ") + " " + msg);
+}
+
+function getEffectiveStatus(fm: TaskFrontmatter, date = todayString()): string {
+  if (!fm.recurrence) return fm.status;
+  const completeInstances = Array.isArray(fm.completeInstances) ? fm.completeInstances : [];
+  if (completeInstances.includes(date)) return "done";
+  const skippedInstances = Array.isArray(fm.skippedInstances) ? fm.skippedInstances : [];
+  if (skippedInstances.includes(date)) return "cancelled";
+  return "open";
+}
+
+function todayString(): string {
+  return getCurrentDateString();
 }
