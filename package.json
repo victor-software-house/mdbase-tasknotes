@@ -27,6 +27,7 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "start": "node dist/cli.js",
+    "test": "npm run build && node --test tests/**/*.test.mjs",
     "test:tz-parity": "npm run build && ./scripts/test-tz-parity.sh",
     "prepublishOnly": "tsup"
   },

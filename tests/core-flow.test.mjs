@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { runCli, makeTempDir, stripAnsi } from './helpers.mjs';
+
+test('core flow: init/create/list/complete/stats', () => {
+  const collectionPath = makeTempDir('mtn-core-');
+
+  let result = runCli(['init', collectionPath]);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  result = runCli(['create', '--path', collectionPath, 'Buy groceries tomorrow #shopping @errands']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  result = runCli(['create', '--path', collectionPath, 'Write report due friday #work']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  result = runCli(['create', '--path', collectionPath, 'Fix sink #home']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  result = runCli(['list', '--path', collectionPath, '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const listed = JSON.parse(result.stdout);
+  assert.equal(listed.length, 3);
+
+  result = runCli(['complete', '--path', collectionPath, 'Buy groceries']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+
+  result = runCli(['list', '--path', collectionPath, '--status', 'open', '--json']);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const openOnly = JSON.parse(result.stdout);
+  assert.equal(openOnly.length, 2);
+
+  result = runCli(['stats', '--path', collectionPath]);
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  const clean = stripAnsi(result.stdout);
+  assert.match(clean, /Total tasks:\s+3/);
+  assert.match(clean, /Completion rate:\s+33%/);
+});
