@@ -21,28 +21,26 @@
     "mtn": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "scripts",
+    "src/shims/bun-sqlite-worker.js"
   ],
   "scripts": {
-    "build": "tsup",
-    "dev": "tsup --watch",
-    "start": "node dist/cli.js",
-    "test": "npm run build && node --test tests/**/*.test.mjs",
-    "test:tz-parity": "npm run build && ./scripts/test-tz-parity.sh",
-    "prepublishOnly": "tsup"
+    "build": "bun scripts/build.ts",
+    "start": "bun dist/cli.js",
+    "test": "bun run build && bun --test tests/**/*.test.mjs",
+    "test:tz-parity": "bun run build && ./scripts/test-tz-parity.sh",
+    "postinstall": "bash scripts/patch-bun-sqlite.sh",
+    "prepublishOnly": "bun scripts/build.ts"
   },
   "dependencies": {
     "@callumalpass/mdbase": "^0.2.1",
-    "chalk": "^4.1.2",
     "commander": "^12.1.0",
     "date-fns": "^4.1.0",
-    "ora": "^5.4.1",
     "rrule": "^2.8.1"
   },
   "devDependencies": {
-    "@types/node": "^20.0.0",
-    "tasknotes-nlp-core": "^0.1.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.5.0"
+    "@types/bun": "latest",
+    "tasknotes-nlp-core": "^0.1.0"
   }
 }

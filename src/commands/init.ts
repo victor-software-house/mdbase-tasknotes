@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { initCollection, initCollectionForce } from "../init.js";
 
 export async function initCommand(
@@ -11,15 +11,15 @@ export async function initCommand(
     const init = options.force ? initCollectionForce : initCollection;
     const { created } = await init(target);
 
-    console.log(chalk.green("✓") + " Initialized mdbase-tasknotes collection:");
+    console.log(c.green("✓") + " Initialized mdbase-tasknotes collection:");
     for (const file of created) {
-      console.log(chalk.dim("  " + file));
+      console.log(c.dim("  " + file));
     }
     console.log("");
-    console.log(`Collection path: ${chalk.cyan(target)}`);
-    console.log(`Create tasks with: ${chalk.cyan("mtn create \"Buy groceries tomorrow #shopping\"")}`);
+    console.log(`Collection path: ${c.cyan(target)}`);
+    console.log(`Create tasks with: ${c.cyan("mtn create \"Buy groceries tomorrow #shopping\"")}`);
   } catch (err) {
-    console.error(chalk.red("✗") + ` ${(err as Error).message}`);
+    console.error(c.red("✗") + ` ${(err as Error).message}`);
     process.exit(1);
   }
 }

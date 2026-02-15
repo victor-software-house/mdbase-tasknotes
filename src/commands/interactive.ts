@@ -1,5 +1,5 @@
 import * as readline from "node:readline";
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { withCollection } from "../collection.js";
 import { createParser } from "../nlp.js";
 import { mapToFrontmatter } from "../mapper.js";
@@ -35,16 +35,16 @@ function formatPreviewInline(
   const parsed = parser.parseInput(input);
   const parts: string[] = [];
 
-  if (parsed.title) parts.push(chalk.cyan(`"${parsed.title}"`));
-  if (parsed.status) parts.push(chalk.yellow(`[${parsed.status}]`));
-  if (parsed.priority) parts.push(chalk.red(`[${parsed.priority}]`));
-  if (parsed.tags?.length) parts.push(parsed.tags.map((t) => chalk.cyan(`#${t}`)).join(" "));
-  if (parsed.contexts?.length) parts.push(parsed.contexts.map((c) => chalk.magenta(`@${c}`)).join(" "));
-  if (parsed.projects?.length) parts.push(parsed.projects.map((p) => chalk.blue(`+${p}`)).join(" "));
-  if (parsed.dueDate) parts.push(chalk.yellow(`due:${parsed.dueDate}`));
-  if (parsed.scheduledDate) parts.push(chalk.cyan(`scheduled:${parsed.scheduledDate}`));
-  if (parsed.estimate) parts.push(chalk.dim(`~${parsed.estimate}m`));
-  if (parsed.recurrence) parts.push(chalk.green(`recur:${parsed.recurrence}`));
+  if (parsed.title) parts.push(c.cyan(`"${parsed.title}"`));
+  if (parsed.status) parts.push(c.yellow(`[${parsed.status}]`));
+  if (parsed.priority) parts.push(c.red(`[${parsed.priority}]`));
+  if (parsed.tags?.length) parts.push(parsed.tags.map((t) => c.cyan(`#${t}`)).join(" "));
+  if (parsed.contexts?.length) parts.push(parsed.contexts.map((ctx) => c.magenta(`@${c}`)).join(" "));
+  if (parsed.projects?.length) parts.push(parsed.projects.map((p) => c.blue(`+${p}`)).join(" "));
+  if (parsed.dueDate) parts.push(c.yellow(`due:${parsed.dueDate}`));
+  if (parsed.scheduledDate) parts.push(c.cyan(`scheduled:${parsed.scheduledDate}`));
+  if (parsed.estimate) parts.push(c.dim(`~${parsed.estimate}m`));
+  if (parsed.recurrence) parts.push(c.green(`recur:${parsed.recurrence}`));
 
   return parts.join(" ");
 }
@@ -53,7 +53,7 @@ function updatePreview(text: string): void {
   process.stdout.write("\x1b[s"); // Save cursor
   process.stdout.write("\x1b[3A"); // Move up 3 lines
   process.stdout.write("\r\x1b[K"); // Clear line
-  process.stdout.write(chalk.dim("Preview: ") + text);
+  process.stdout.write(c.dim("Preview: ") + text);
   process.stdout.write("\x1b[u"); // Restore cursor
 }
 
@@ -64,18 +64,18 @@ export async function interactiveCommand(
     const parser = await createParser(options.path);
 
     await withCollection(async (collection, mapping) => {
-      console.log(chalk.bold("mdbase-tasknotes Interactive Mode"));
-      console.log(chalk.dim("Type a task description and press Enter to create"));
-      console.log(chalk.dim("Press Ctrl+C to exit"));
+      console.log(c.bold("mdbase-tasknotes Interactive Mode"));
+      console.log(c.dim("Type a task description and press Enter to create"));
+      console.log(c.dim("Press Ctrl+C to exit"));
       console.log("─".repeat(process.stdout.columns || 80));
-      console.log(chalk.dim("Preview: (will appear here as you type)"));
+      console.log(c.dim("Preview: (will appear here as you type)"));
       console.log("─".repeat(process.stdout.columns || 80));
       console.log("");
 
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
-        prompt: chalk.green("Task: "),
+        prompt: c.green("Task: "),
       });
 
       rl.prompt();
@@ -88,7 +88,7 @@ export async function interactiveCommand(
         }
 
         process.stdout.write("\r\x1b[K");
-        console.log(chalk.dim("Creating task..."));
+        console.log(c.dim("Creating task..."));
 
         try {
           const parsed = parser.parseInput(trimmed);
@@ -110,14 +110,14 @@ export async function interactiveCommand(
             };
             showSuccess("Task created");
             console.log(formatTask(task));
-            console.log(chalk.dim(`  → ${result.path}`));
+            console.log(c.dim(`  → ${result.path}`));
           }
         } catch (err) {
           showError((err as Error).message);
         }
 
         console.log("\n" + "─".repeat(process.stdout.columns || 80));
-        console.log(chalk.dim("Preview: (will appear here as you type)"));
+        console.log(c.dim("Preview: (will appear here as you type)"));
         console.log("─".repeat(process.stdout.columns || 80));
         console.log("");
 

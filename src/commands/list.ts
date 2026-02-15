@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { withCollection } from "../collection.js";
 import { formatTask, formatTaskForDate, showError } from "../format.js";
 import {
@@ -156,7 +156,7 @@ export async function listCommand(options: {
       }
 
       if (tasks.length === 0) {
-        console.log(chalk.dim("No tasks found."));
+        console.log(c.dim("No tasks found."));
         return;
       }
 
@@ -174,7 +174,7 @@ export async function listCommand(options: {
       }
 
       if (result.meta?.has_more) {
-        console.log(chalk.dim(`\n  ... and more (use --limit to show more)`));
+        console.log(c.dim(`\n  ... and more (use --limit to show more)`));
       }
     }, options.path);
   } catch (err) {

@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { basename, dirname } from "node:path";
 import { withCollection } from "../collection.js";
 import { formatTask, showError } from "../format.js";
@@ -203,7 +203,7 @@ export async function projectsListCommand(
       }
 
       if (projectMap.size === 0) {
-        console.log(chalk.dim("No projects found."));
+        console.log(c.dim("No projects found."));
         return;
       }
 
@@ -218,10 +218,10 @@ export async function projectsListCommand(
               ? Math.round((counts.done / counts.total) * 100)
               : 0;
           console.log(
-            `  ${chalk.blue(`+${name}`)}  ${counts.open} open, ${counts.done} done (${pct}%)`,
+            `  ${c.blue(`+${name}`)}  ${counts.open} open, ${counts.done} done (${pct}%)`,
           );
         } else {
-          console.log(`  ${chalk.blue(`+${name}`)}`);
+          console.log(`  ${c.blue(`+${name}`)}`);
         }
       }
     }, options.path);
@@ -275,11 +275,11 @@ export async function projectsShowCommand(
       }
 
       if (filtered.length === 0) {
-        console.log(chalk.dim(`No tasks in project "${name}".`));
+        console.log(c.dim(`No tasks in project "${name}".`));
         return;
       }
 
-      console.log(chalk.bold(`Project: +${name}\n`));
+      console.log(c.bold(`Project: +${name}\n`));
       for (const task of filtered) {
         console.log(formatTask(task));
       }
