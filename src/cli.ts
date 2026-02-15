@@ -1,4 +1,5 @@
 import { Command } from "commander";
+import pkg from "../package.json";
 import { initCommand } from "./commands/init.js";
 import { createCommand } from "./commands/create.js";
 import { listCommand } from "./commands/list.js";
@@ -25,7 +26,7 @@ const program = new Command();
 program
   .name("mtn")
   .description("Standalone CLI for managing markdown tasks via mdbase")
-  .version("0.1.0")
+  .version(pkg.version)
   .option("-p, --path <path>", "Path to mdbase collection");
 
 // Init
