@@ -1,6 +1,7 @@
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { showError, showSuccess } from "../format.js";
 import { normalizeFrontmatter, denormalizeFrontmatter } from "../field-mapping.js";
+import { localISOString } from "../mapper.js";
 
 export async function archiveCommand(
   pathOrTitle: string,
@@ -28,7 +29,7 @@ export async function archiveCommand(
 
       const result = await collection.update({
         path: taskPath,
-        fields: denormalizeFrontmatter({ tags }, mapping),
+        fields: denormalizeFrontmatter({ tags, dateModified: localISOString() }, mapping),
       });
 
       if (result.error) {
