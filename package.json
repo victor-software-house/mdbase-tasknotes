@@ -30,8 +30,8 @@
     "start": "bun dist/cli.js",
     "test": "bun run build && bun --test tests/**/*.test.mjs",
     "test:tz-parity": "bun run build && ./scripts/test-tz-parity.sh",
-    "postinstall": "bash scripts/patch-bun-sqlite.sh",
-    "prepublishOnly": "bun scripts/build.ts"
+    "prepare": "bun scripts/build.ts",
+    "postinstall": "bash scripts/patch-bun-sqlite.sh"
   },
   "dependencies": {
     "@callumalpass/mdbase": "^0.2.1",
