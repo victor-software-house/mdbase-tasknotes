@@ -36,7 +36,7 @@ export function mapToFrontmatter(parsed: ParsedTaskData): {
  */
 export function extractProjectNames(projects?: string[]): string[] {
   if (!projects) return [];
-  return projects.map((p) => {
+  return projects.filter(Boolean).map((p) => {
     const match = p.match(/\[\[(?:.*\/)?([^\]]+)\]\]/);
     return match ? match[1] : p;
   });
