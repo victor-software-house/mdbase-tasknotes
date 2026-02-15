@@ -83,6 +83,21 @@ export async function updateCommand(
         process.exit(1);
       }
 
+      // Rename file when title changes (path_pattern: "TaskNotes/Tasks/{title}.md")
+      if (options.title && options.title !== fm.title) {
+        const dir = taskPath.substring(0, taskPath.lastIndexOf("/") + 1);
+        const newPath = `${dir}${options.title}.md`;
+        const renameResult = await collection.rename({
+          from: taskPath,
+          to: newPath,
+          update_refs: true,
+        });
+        if (renameResult.error) {
+          showError(`Title updated but file rename failed: ${(renameResult.error as Error).message}`);
+          process.exit(1);
+        }
+      }
+
       showSuccess(`Updated: ${taskTitle}`);
     }, options.path);
   } catch (err) {
