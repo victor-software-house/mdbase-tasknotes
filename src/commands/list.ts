@@ -1,7 +1,12 @@
 import chalk from "chalk";
 import { withCollection } from "../collection.js";
 import { formatTask, formatTaskForDate, showError } from "../format.js";
-import { normalizeFrontmatter, resolveDisplayTitle, resolveField } from "../field-mapping.js";
+import {
+  normalizeFrontmatter,
+  resolveDisplayTitle,
+  resolveField,
+  isCompletedStatus,
+} from "../field-mapping.js";
 import type { TaskResult } from "../types.js";
 import { isBeforeDateSafe, resolveDateOrToday, validateDateString } from "../date.js";
 
@@ -32,11 +37,16 @@ export async function listCommand(options: {
         const tagsField = resolveField(mapping, "tags");
         const dueField = resolveField(mapping, "due");
 
+        const completedStatuses = mapping.completedStatuses;
+
         if (options.status && !options.on) {
           conditions.push(`${statusField} == "${options.status}"`);
         } else if (!options.overdue) {
-          // Default: non-completed tasks. Recurring tasks use completeInstances for per-day completion.
-          conditions.push(`${statusField} != "done" && ${statusField} != "cancelled"`);
+          // Default: non-completed tasks. Recurring tasks are handled in post-filtering.
+          for (const status of completedStatuses) {
+            const escaped = status.replace(/"/g, '\\"');
+            conditions.push(`${statusField} != "${escaped}"`);
+          }
         }
 
         if (options.priority) {
@@ -52,7 +62,11 @@ export async function listCommand(options: {
         }
 
         if (options.overdue) {
-          conditions.push(`${dueField} != null && ${statusField} != "done" && ${statusField} != "cancelled"`);
+          conditions.push(`${dueField} != null`);
+          for (const status of completedStatuses) {
+            const escaped = status.replace(/"/g, '\\"');
+            conditions.push(`${statusField} != "${escaped}"`);
+          }
         }
       }
 
@@ -71,7 +85,7 @@ export async function listCommand(options: {
       const tasks = rawTasks.filter((task) => {
         const fm = normalizeFrontmatter(task.frontmatter as Record<string, unknown>, mapping);
         if (options.overdue) {
-          if (fm.status === "done" || fm.status === "cancelled") return false;
+          if (isCompletedStatus(mapping, typeof fm.status === "string" ? fm.status : undefined)) return false;
           if (typeof fm.due !== "string" || fm.due.trim().length === 0) return false;
           if (!isBeforeDateSafe(fm.due, today)) return false;
         }
@@ -95,7 +109,11 @@ export async function listCommand(options: {
             : "open";
 
         if (options.status) {
-          return effectiveStatus === options.status;
+          if (isCompletedStatus(mapping, options.status)) {
+            return effectiveStatus === "done" || effectiveStatus === "cancelled";
+          }
+          if (effectiveStatus !== "open") return false;
+          return String(fm.status || "") === options.status;
         }
 
         return effectiveStatus !== "done" && effectiveStatus !== "cancelled";

@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { basename, dirname } from "node:path";
 import { withCollection } from "../collection.js";
 import { formatTask, showError } from "../format.js";
-import { normalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
+import { normalizeFrontmatter, resolveDisplayTitle, isCompletedStatus } from "../field-mapping.js";
 import type { TaskResult, TaskFrontmatter } from "../types.js";
 import type { Collection } from "@callumalpass/mdbase";
 import type { FieldMapping } from "../field-mapping.js";
@@ -193,10 +193,7 @@ export async function projectsListCommand(
         for (const project of projects) {
           const entry = projectMap.get(project) || { total: 0, done: 0, open: 0 };
           entry.total++;
-          if (
-            task.frontmatter.status === "done" ||
-            task.frontmatter.status === "cancelled"
-          ) {
+          if (isCompletedStatus(mapping, task.frontmatter.status)) {
             entry.done++;
           } else {
             entry.open++;
