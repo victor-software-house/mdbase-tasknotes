@@ -76,6 +76,7 @@ Task text is parsed using [tasknotes-nlp-core](https://github.com/callumalpass/t
 - **Estimates** — `~30m`, `~2h`
 
 The parser reads status and priority values from your collection's `_types/task.md`, so customizing the type definition changes what the parser accepts.
+For completion semantics, `mtn` also reads optional `tn_completed_values` on the status field (for example `tn_completed_values: [done, cancelled]`).
 
 ## Collection path
 

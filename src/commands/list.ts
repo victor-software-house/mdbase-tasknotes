@@ -40,7 +40,9 @@ export async function listCommand(options: {
         const completedStatuses = mapping.completedStatuses;
 
         if (options.status && !options.on) {
-          conditions.push(`${statusField} == "${options.status}"`);
+          if (!isCompletedStatus(mapping, options.status)) {
+            conditions.push(`${statusField} == "${options.status}"`);
+          }
         } else if (!options.overdue) {
           // Default: non-completed tasks. Recurring tasks are handled in post-filtering.
           for (const status of completedStatuses) {
