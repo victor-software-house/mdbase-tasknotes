@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { withCollection } from "../collection.js";
 import { formatDuration, showError } from "../format.js";
 import { normalizeFrontmatter, isCompletedStatus } from "../field-mapping.js";
@@ -23,7 +23,7 @@ export async function statsCommand(
       const total = tasks.length;
 
       if (total === 0) {
-        console.log(chalk.dim("No tasks found."));
+        console.log(c.dim("No tasks found."));
         return;
       }
 
@@ -64,21 +64,21 @@ export async function statsCommand(
       }
 
       // Display
-      console.log(chalk.bold("Task Statistics\n"));
+      console.log(c.bold("Task Statistics\n"));
       console.log(`  Total tasks:     ${total}`);
       console.log(`  Completion rate: ${completionRate}%`);
-      console.log(`  Overdue:         ${overdue > 0 ? chalk.red(String(overdue)) : "0"}`);
+      console.log(`  Overdue:         ${overdue > 0 ? c.red(String(overdue)) : "0"}`);
 
-      console.log(chalk.dim("\n  By status:"));
+      console.log(c.dim("\n  By status:"));
       for (const [status, count] of [...byStatus.entries()].sort()) {
         const bar = "█".repeat(Math.ceil((count / total) * 30));
-        console.log(`    ${status.padEnd(14)} ${String(count).padStart(4)}  ${chalk.dim(bar)}`);
+        console.log(`    ${status.padEnd(14)} ${String(count).padStart(4)}  ${c.dim(bar)}`);
       }
 
-      console.log(chalk.dim("\n  By priority:"));
+      console.log(c.dim("\n  By priority:"));
       for (const [priority, count] of [...byPriority.entries()].sort()) {
         const bar = "█".repeat(Math.ceil((count / total) * 30));
-        console.log(`    ${priority.padEnd(14)} ${String(count).padStart(4)}  ${chalk.dim(bar)}`);
+        console.log(`    ${priority.padEnd(14)} ${String(count).padStart(4)}  ${c.dim(bar)}`);
       }
 
       if (totalMinutes > 0) {

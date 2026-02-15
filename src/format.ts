@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "./colors.js";
 import { format as fmtDate, isPast, parseISO } from "date-fns";
 import type { TaskFrontmatter, TaskResult } from "./types.js";
 import { extractProjectNames } from "./mapper.js";
@@ -12,10 +12,10 @@ const STATUS_ICONS: Record<string, string> = {
 };
 
 const PRIORITY_COLORS: Record<string, (s: string) => string> = {
-  urgent: chalk.red,
-  high: chalk.red,
-  normal: chalk.yellow,
-  low: chalk.green,
+  urgent: c.red,
+  high: c.red,
+  normal: c.yellow,
+  low: c.green,
 };
 
 export function getStatusIcon(status: string): string {
@@ -23,30 +23,30 @@ export function getStatusIcon(status: string): string {
 }
 
 function priorityColor(priority: string): (s: string) => string {
-  return PRIORITY_COLORS[priority] || chalk.white;
+  return PRIORITY_COLORS[priority] || c.white;
 }
 
 function statusColor(status: string): (s: string) => string {
   switch (status) {
     case "open":
-      return chalk.blue;
+      return c.blue;
     case "in-progress":
-      return chalk.yellow;
+      return c.yellow;
     case "done":
-      return chalk.green;
+      return c.green;
     case "cancelled":
-      return chalk.gray;
+      return c.gray;
     default:
-      return chalk.white;
+      return c.white;
   }
 }
 
 export function formatDate(dateStr: string | undefined): string {
   if (!dateStr) return "";
   try {
-    if (isSameDateSafe(dateStr, getCurrentDateString())) return chalk.cyan("today");
+    if (isSameDateSafe(dateStr, getCurrentDateString())) return c.cyan("today");
     const date = parseDateToLocal(dateStr);
-    if (isPast(date)) return chalk.red(fmtDate(date, "yyyy-MM-dd"));
+    if (isPast(date)) return c.red(fmtDate(date, "yyyy-MM-dd"));
     return fmtDate(date, "yyyy-MM-dd");
   } catch {
     return dateStr;
@@ -83,33 +83,33 @@ export function formatTaskForDate(task: TaskResult, date: string): string {
 
   // Due date
   if (fm.due) {
-    parts.push(chalk.dim("due:") + formatDate(fm.due));
+    parts.push(c.dim("due:") + formatDate(fm.due));
   }
 
   // Scheduled date
   if (fm.scheduled) {
-    parts.push(chalk.dim("scheduled:") + formatDate(fm.scheduled));
+    parts.push(c.dim("scheduled:") + formatDate(fm.scheduled));
   }
 
   // Tags
   if (fm.tags && fm.tags.length > 0) {
-    parts.push(chalk.cyan(fm.tags.map((t) => `#${t}`).join(" ")));
+    parts.push(c.cyan(fm.tags.map((t) => `#${t}`).join(" ")));
   }
 
   // Contexts
   if (fm.contexts && fm.contexts.length > 0) {
-    parts.push(chalk.magenta(fm.contexts.map((c) => `@${c}`).join(" ")));
+    parts.push(c.magenta(fm.contexts.map((c_) => `@${c_}`).join(" ")));
   }
 
   // Projects
   const projects = extractProjectNames(fm.projects as string[] | undefined);
   if (projects.length > 0) {
-    parts.push(chalk.blue(projects.map((p) => `+${p}`).join(" ")));
+    parts.push(c.blue(projects.map((p) => `+${p}`).join(" ")));
   }
 
   // Time estimate
   if (fm.timeEstimate) {
-    parts.push(chalk.dim(`~${formatDuration(fm.timeEstimate)}`));
+    parts.push(c.dim(`~${formatDuration(fm.timeEstimate)}`));
   }
 
   return parts.join(" ");
@@ -131,9 +131,9 @@ function formatTaskDetailInternal(task: TaskResult, asOfDate: string): string {
 
   // Header
   lines.push(
-    `${getStatusIcon(effectiveStatus)} ${chalk.bold(fm.title)}`,
+    `${getStatusIcon(effectiveStatus)} ${c.bold(fm.title)}`,
   );
-  lines.push(chalk.dim("─".repeat(60)));
+  lines.push(c.dim("─".repeat(60)));
 
   // Status & Priority
   lines.push(
@@ -149,18 +149,18 @@ function formatTaskDetailInternal(task: TaskResult, asOfDate: string): string {
   if (fm.due) lines.push(`  Due:      ${formatDate(fm.due)}`);
   if (fm.scheduled) lines.push(`  Scheduled: ${formatDate(fm.scheduled)}`);
   if (fm.completedDate) lines.push(`  Completed: ${formatDate(fm.completedDate)}`);
-  if (fm.dateCreated) lines.push(`  Created:  ${chalk.dim(fm.dateCreated)}`);
+  if (fm.dateCreated) lines.push(`  Created:  ${c.dim(fm.dateCreated)}`);
 
   // Tags, Contexts, Projects
   if (fm.tags && fm.tags.length > 0) {
-    lines.push(`  Tags:     ${chalk.cyan(fm.tags.map((t) => `#${t}`).join(" "))}`);
+    lines.push(`  Tags:     ${c.cyan(fm.tags.map((t) => `#${t}`).join(" "))}`);
   }
   if (fm.contexts && fm.contexts.length > 0) {
-    lines.push(`  Contexts: ${chalk.magenta(fm.contexts.map((c) => `@${c}`).join(" "))}`);
+    lines.push(`  Contexts: ${c.magenta(fm.contexts.map((c_) => `@${c_}`).join(" "))}`);
   }
   const projects = extractProjectNames(fm.projects as string[] | undefined);
   if (projects.length > 0) {
-    lines.push(`  Projects: ${chalk.blue(projects.map((p) => `+${p}`).join(" "))}`);
+    lines.push(`  Projects: ${c.blue(projects.map((p) => `+${p}`).join(" "))}`);
   }
 
   // Time
@@ -173,14 +173,14 @@ function formatTaskDetailInternal(task: TaskResult, asOfDate: string): string {
   if (fm.recurrence && Array.isArray(fm.completeInstances)) {
     const completed = fm.completeInstances.includes(asOfDate);
     const skipped = Array.isArray(fm.skippedInstances) && fm.skippedInstances.includes(asOfDate);
-    const label = skipped ? chalk.gray("skipped") : completed ? chalk.green("completed") : chalk.yellow("open");
+    const label = skipped ? c.gray("skipped") : completed ? c.green("completed") : c.yellow("open");
     lines.push(`  Instance (${asOfDate}): ${label}`);
   }
 
   // Time entries
   if (fm.timeEntries && fm.timeEntries.length > 0) {
     lines.push("");
-    lines.push(chalk.dim("  Time entries:"));
+    lines.push(c.dim("  Time entries:"));
     for (const entry of fm.timeEntries) {
       const start = entry.startTime ? fmtDate(parseISO(entry.startTime), "yyyy-MM-dd HH:mm") : "?";
       const end = entry.endTime ? fmtDate(parseISO(entry.endTime), "HH:mm") : "running";
@@ -191,12 +191,12 @@ function formatTaskDetailInternal(task: TaskResult, asOfDate: string): string {
 
   // Path
   lines.push("");
-  lines.push(chalk.dim(`  Path: ${task.path}`));
+  lines.push(c.dim(`  Path: ${task.path}`));
 
   // Body
   if (task.body) {
     lines.push("");
-    lines.push(chalk.dim("─".repeat(60)));
+    lines.push(c.dim("─".repeat(60)));
     lines.push(task.body);
   }
 
@@ -204,19 +204,19 @@ function formatTaskDetailInternal(task: TaskResult, asOfDate: string): string {
 }
 
 export function showError(msg: string): void {
-  console.error(chalk.red("✗") + " " + msg);
+  console.error(c.red("✗") + " " + msg);
 }
 
 export function showSuccess(msg: string): void {
-  console.log(chalk.green("✓") + " " + msg);
+  console.log(c.green("✓") + " " + msg);
 }
 
 export function showWarning(msg: string): void {
-  console.log(chalk.yellow("⚠") + " " + msg);
+  console.log(c.yellow("⚠") + " " + msg);
 }
 
 export function showInfo(msg: string): void {
-  console.log(chalk.blue("ℹ") + " " + msg);
+  console.log(c.blue("ℹ") + " " + msg);
 }
 
 function getEffectiveStatus(fm: TaskFrontmatter, date = todayString()): string {

@@ -1,12 +1,12 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { getConfig, setConfig, getConfigPath } from "../config.js";
 import { showError, showSuccess } from "../format.js";
 
-export function configCommand(options: {
+export async function configCommand(options: {
   set?: string;
   get?: string;
   list?: boolean;
-}): void {
+}): Promise<void> {
   if (options.set) {
     const eqIndex = options.set.indexOf("=");
     if (eqIndex === -1) {
@@ -21,13 +21,13 @@ export function configCommand(options: {
       process.exit(1);
     }
 
-    setConfig(key, value || null);
+    await setConfig(key, value || null);
     showSuccess(`Set ${key} = ${value || "(null)"}`);
     return;
   }
 
   if (options.get) {
-    const config = getConfig();
+    const config = await getConfig();
     const key = options.get as keyof typeof config;
     if (!(key in config)) {
       showError(`Unknown config key: ${key}. Valid keys: collectionPath, language`);
@@ -38,9 +38,9 @@ export function configCommand(options: {
   }
 
   // Default: list all
-  const config = getConfig();
-  console.log(chalk.dim(`Config file: ${getConfigPath()}\n`));
+  const config = await getConfig();
+  console.log(c.dim(`Config file: ${getConfigPath()}\n`));
   for (const [key, value] of Object.entries(config)) {
-    console.log(`  ${key}: ${value ?? chalk.dim("(not set)")}`);
+    console.log(`  ${key}: ${value ?? c.dim("(not set)")}`);
   }
 }

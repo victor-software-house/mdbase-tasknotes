@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { withCollection } from "../collection.js";
 import { createParser } from "../nlp.js";
 import { mapToFrontmatter } from "../mapper.js";
@@ -42,7 +42,7 @@ export async function createCommand(
 
       showSuccess("Task created");
       console.log(formatTask(task));
-      console.log(chalk.dim(`  → ${result.path}`));
+      console.log(c.dim(`  → ${result.path}`));
     }, options.path);
   } catch (err) {
     showError((err as Error).message);

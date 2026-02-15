@@ -8,7 +8,7 @@ import { resolveCollectionPath } from "./config.js";
 import { buildFieldMapping } from "./field-mapping.js";
 
 export async function createParser(flagPath?: string): Promise<NaturalLanguageParserCore> {
-  const collectionPath = resolveCollectionPath(flagPath);
+  const collectionPath = await resolveCollectionPath(flagPath);
 
   // Load the task type definition to extract status and priority enums
   const configResult = await loadConfig(collectionPath);

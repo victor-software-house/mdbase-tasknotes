@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { withCollection } from "../collection.js";
 import { formatTask, showError } from "../format.js";
 import { extractProjectNames } from "../mapper.js";
@@ -59,11 +59,11 @@ export async function searchCommand(
       const results = scored.slice(0, limit);
 
       if (results.length === 0) {
-        console.log(chalk.dim(`No tasks matching "${searchTerm}".`));
+        console.log(c.dim(`No tasks matching "${searchTerm}".`));
         return;
       }
 
-      console.log(chalk.dim(`${results.length} result(s) for "${searchTerm}":\n`));
+      console.log(c.dim(`${results.length} result(s) for "${searchTerm}":\n`));
       for (const { task } of results) {
         console.log(formatTask(task));
       }

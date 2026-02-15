@@ -1,5 +1,5 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
+import { mkdirSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 export interface InitOptions {
   tasksFolder?: string;
@@ -170,33 +170,33 @@ export function buildTaskTypeDef(opts: InitOptions = {}): string {
 }
 
 export async function initCollection(targetPath: string): Promise<{ created: string[] }> {
-  const absPath = path.resolve(targetPath);
-  const typesDir = path.join(absPath, "_types");
-  const mdbaseYamlPath = path.join(absPath, "mdbase.yaml");
-  const taskTypeDefPath = path.join(typesDir, "task.md");
+  const absPath = resolve(targetPath);
+  const typesDir = join(absPath, "_types");
+  const mdbaseYamlPath = join(absPath, "mdbase.yaml");
+  const taskTypeDefPath = join(typesDir, "task.md");
 
   const created: string[] = [];
 
   // Create directories
-  fs.mkdirSync(absPath, { recursive: true });
-  fs.mkdirSync(typesDir, { recursive: true });
+  mkdirSync(absPath, { recursive: true });
+  mkdirSync(typesDir, { recursive: true });
 
   // Create tasks folder
-  const tasksDir = path.join(absPath, "tasks");
-  fs.mkdirSync(tasksDir, { recursive: true });
+  const tasksDir = join(absPath, "tasks");
+  mkdirSync(tasksDir, { recursive: true });
 
   // Write mdbase.yaml
-  if (fs.existsSync(mdbaseYamlPath)) {
+  if (await Bun.file(mdbaseYamlPath).exists()) {
     throw new Error(`mdbase.yaml already exists at ${absPath}. Use --force to overwrite.`);
   }
-  fs.writeFileSync(mdbaseYamlPath, buildMdbaseYaml());
+  await Bun.write(mdbaseYamlPath, buildMdbaseYaml());
   created.push("mdbase.yaml");
 
   // Write _types/task.md
-  if (fs.existsSync(taskTypeDefPath)) {
+  if (await Bun.file(taskTypeDefPath).exists()) {
     throw new Error(`_types/task.md already exists at ${absPath}. Use --force to overwrite.`);
   }
-  fs.writeFileSync(taskTypeDefPath, buildTaskTypeDef());
+  await Bun.write(taskTypeDefPath, buildTaskTypeDef());
   created.push("_types/task.md");
 
   created.push("tasks/");
@@ -205,21 +205,21 @@ export async function initCollection(targetPath: string): Promise<{ created: str
 }
 
 export async function initCollectionForce(targetPath: string): Promise<{ created: string[] }> {
-  const absPath = path.resolve(targetPath);
-  const typesDir = path.join(absPath, "_types");
-  const mdbaseYamlPath = path.join(absPath, "mdbase.yaml");
-  const taskTypeDefPath = path.join(typesDir, "task.md");
+  const absPath = resolve(targetPath);
+  const typesDir = join(absPath, "_types");
+  const mdbaseYamlPath = join(absPath, "mdbase.yaml");
+  const taskTypeDefPath = join(typesDir, "task.md");
 
   const created: string[] = [];
 
-  fs.mkdirSync(absPath, { recursive: true });
-  fs.mkdirSync(typesDir, { recursive: true });
-  fs.mkdirSync(path.join(absPath, "tasks"), { recursive: true });
+  mkdirSync(absPath, { recursive: true });
+  mkdirSync(typesDir, { recursive: true });
+  mkdirSync(join(absPath, "tasks"), { recursive: true });
 
-  fs.writeFileSync(mdbaseYamlPath, buildMdbaseYaml());
+  await Bun.write(mdbaseYamlPath, buildMdbaseYaml());
   created.push("mdbase.yaml");
 
-  fs.writeFileSync(taskTypeDefPath, buildTaskTypeDef());
+  await Bun.write(taskTypeDefPath, buildTaskTypeDef());
   created.push("_types/task.md");
 
   created.push("tasks/");

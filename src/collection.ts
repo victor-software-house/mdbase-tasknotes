@@ -5,7 +5,7 @@ import { type FieldMapping, loadFieldMapping, resolveField } from "./field-mappi
 export async function openCollection(
   flagPath?: string,
 ): Promise<Collection> {
-  const collectionPath = resolveCollectionPath(flagPath);
+  const collectionPath = await resolveCollectionPath(flagPath);
   const { collection, error } = await Collection.open(collectionPath);
   if (error) {
     throw new Error(`Failed to open collection at ${collectionPath}: ${error.message}`);

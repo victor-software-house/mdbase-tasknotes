@@ -165,7 +165,7 @@ export function getDefaultCompletedStatus(mapping: FieldMapping): string {
  */
 export async function loadFieldMapping(flagPath?: string): Promise<FieldMapping> {
   try {
-    const collectionPath = resolveCollectionPath(flagPath);
+    const collectionPath = await resolveCollectionPath(flagPath);
     const configResult = await loadConfig(collectionPath);
     if (!configResult.valid || !configResult.config) {
       return defaultFieldMapping();

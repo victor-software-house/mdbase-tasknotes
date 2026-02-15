@@ -1,4 +1,4 @@
-import chalk from "chalk";
+import { c } from "../colors.js";
 import { format, parseISO, differenceInMinutes } from "date-fns";
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { formatDuration, showError, showSuccess, showInfo } from "../format.js";
@@ -145,15 +145,15 @@ export async function timerStatusCommand(
         if (running) {
           const elapsed = differenceInMinutes(new Date(), parseISO(running.startTime));
           console.log(
-            `${chalk.green("●")} ${task.frontmatter.title} — ${formatDuration(elapsed)} elapsed` +
-              (running.description ? chalk.dim(` (${running.description})`) : ""),
+            `${c.green("●")} ${task.frontmatter.title} — ${formatDuration(elapsed)} elapsed` +
+              (running.description ? c.dim(` (${running.description})`) : ""),
           );
           found = true;
         }
       }
 
       if (!found) {
-        console.log(chalk.dim("No active timers."));
+        console.log(c.dim("No active timers."));
       }
     }, options.path);
   } catch (err) {
@@ -219,7 +219,7 @@ export async function timerLogCommand(
       filtered.sort((a, b) => a.entry.startTime.localeCompare(b.entry.startTime));
 
       if (filtered.length === 0) {
-        console.log(chalk.dim("No time entries found."));
+        console.log(c.dim("No time entries found."));
         return;
       }
 
@@ -233,13 +233,13 @@ export async function timerLogCommand(
         totalMinutes += dur;
 
         console.log(
-          `  ${start} → ${end}  ${chalk.dim(formatDuration(dur).padStart(6))}  ${taskTitle}` +
-            (entry.description ? chalk.dim(` — ${entry.description}`) : ""),
+          `  ${start} → ${end}  ${c.dim(formatDuration(dur).padStart(6))}  ${taskTitle}` +
+            (entry.description ? c.dim(` — ${entry.description}`) : ""),
         );
       }
 
-      console.log(chalk.dim("─".repeat(60)));
-      console.log(`  Total: ${chalk.bold(formatDuration(totalMinutes))}`);
+      console.log(c.dim("─".repeat(60)));
+      console.log(`  Total: ${c.bold(formatDuration(totalMinutes))}`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);

@@ -1,57 +1,53 @@
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as os from "node:os";
+import { mkdirSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { homedir } from "node:os";
 import type { CLIConfig } from "./types.js";
 
-const CONFIG_DIR = path.join(
-  os.homedir(),
-  ".config",
-  "mdbase-tasknotes",
-);
-const CONFIG_FILE = path.join(CONFIG_DIR, "config.json");
+const CONFIG_DIR = join(homedir(), ".config", "mdbase-tasknotes");
+const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
 const DEFAULT_CONFIG: CLIConfig = {
   collectionPath: null,
   language: "en",
 };
 
-function load(): CLIConfig {
+async function load(): Promise<CLIConfig> {
   try {
-    const raw = fs.readFileSync(CONFIG_FILE, "utf-8");
-    return { ...DEFAULT_CONFIG, ...JSON.parse(raw) };
+    const data = await Bun.file(CONFIG_FILE).json();
+    return { ...DEFAULT_CONFIG, ...data };
   } catch {
     return { ...DEFAULT_CONFIG };
   }
 }
 
-function save(config: CLIConfig): void {
-  fs.mkdirSync(CONFIG_DIR, { recursive: true });
-  fs.writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2) + "\n");
+async function save(config: CLIConfig): Promise<void> {
+  mkdirSync(CONFIG_DIR, { recursive: true });
+  await Bun.write(CONFIG_FILE, JSON.stringify(config, null, 2) + "\n");
 }
 
-export function getConfig(): CLIConfig {
+export async function getConfig(): Promise<CLIConfig> {
   return load();
 }
 
-export function setConfig(key: string, value: string | null): void {
-  const config = load();
+export async function setConfig(key: string, value: string | null): Promise<void> {
+  const config = await load();
   if (key === "collectionPath") {
     config.collectionPath = value;
   } else if (key === "language") {
     config.language = value ?? "en";
   }
-  save(config);
+  await save(config);
 }
 
 export function getConfigPath(): string {
   return CONFIG_FILE;
 }
 
-export function resolveCollectionPath(flagPath?: string): string {
-  if (flagPath) return path.resolve(flagPath);
+export async function resolveCollectionPath(flagPath?: string): Promise<string> {
+  if (flagPath) return resolve(flagPath);
   const envPath = process.env.MDBASE_TASKNOTES_PATH;
-  if (envPath) return path.resolve(envPath);
-  const config = load();
-  if (config.collectionPath) return path.resolve(config.collectionPath);
+  if (envPath) return resolve(envPath);
+  const config = await load();
+  if (config.collectionPath) return resolve(config.collectionPath);
   return process.cwd();
 }
