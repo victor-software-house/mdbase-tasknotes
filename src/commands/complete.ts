@@ -9,6 +9,7 @@ import {
 } from "../field-mapping.js";
 import { completeRecurringTask } from "../recurrence.js";
 import { resolveDateOrToday } from "../date.js";
+import { localISOString } from "../mapper.js";
 
 export async function completeCommand(
   pathOrTitle: string,
@@ -70,6 +71,7 @@ export async function completeCommand(
                 recurrence: recurring.updatedRecurrence,
                 completeInstances: recurring.completeInstances,
                 skippedInstances: recurring.skippedInstances,
+                dateModified: localISOString(),
               },
               mapping,
             ),
@@ -89,6 +91,7 @@ export async function completeCommand(
           scheduled: recurring.nextScheduled,
           completeInstances: recurring.completeInstances,
           skippedInstances: recurring.skippedInstances,
+          dateModified: localISOString(),
         };
 
         if (recurring.nextDue) {
@@ -114,6 +117,7 @@ export async function completeCommand(
         fields: denormalizeFrontmatter({
           status: completionStatus,
           completedDate: today,
+          dateModified: localISOString(),
         }, mapping),
       });
 

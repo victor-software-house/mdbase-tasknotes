@@ -3,6 +3,7 @@ import { showError, showSuccess } from "../format.js";
 import { normalizeFrontmatter, denormalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
 import { recalculateRecurringSchedule } from "../recurrence.js";
 import { resolveDateOrToday } from "../date.js";
+import { localISOString } from "../mapper.js";
 
 export async function skipCommand(
   pathOrTitle: string,
@@ -78,6 +79,7 @@ async function setSkipState(
         recurrence: schedule.updatedRecurrence,
         completeInstances: nextCompleteInstances,
         skippedInstances: nextSkippedInstances,
+        dateModified: localISOString(),
       };
       if (schedule.nextScheduled) {
         fields.scheduled = schedule.nextScheduled;

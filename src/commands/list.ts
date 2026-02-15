@@ -7,6 +7,7 @@ import {
   resolveField,
   isCompletedStatus,
 } from "../field-mapping.js";
+import type { FieldMapping, FieldRole } from "../field-mapping.js";
 import type { TaskResult } from "../types.js";
 import { isBeforeDateSafe, resolveDateOrToday, validateDateString } from "../date.js";
 
@@ -15,6 +16,9 @@ export async function listCommand(options: {
   status?: string;
   priority?: string;
   tag?: string;
+  context?: string;
+  project?: string;
+  filter?: string;
   due?: string;
   overdue?: boolean;
   where?: string;
@@ -28,13 +32,19 @@ export async function listCommand(options: {
       // Build where expression from flags
       const conditions: string[] = [];
 
-      if (options.where) {
+      if (options.filter) {
+        // Fluent filter syntax: "property:value AND property:value"
+        const filterConditions = parseFluentFilter(options.filter, mapping);
+        conditions.push(...filterConditions);
+      } else if (options.where) {
         // Raw user-supplied expression — NOT translated
         conditions.push(options.where);
       } else {
         const statusField = resolveField(mapping, "status");
         const priorityField = resolveField(mapping, "priority");
         const tagsField = resolveField(mapping, "tags");
+        const contextsField = resolveField(mapping, "contexts");
+        const projectsField = resolveField(mapping, "projects");
         const dueField = resolveField(mapping, "due");
 
         const completedStatuses = mapping.completedStatuses;
@@ -57,6 +67,14 @@ export async function listCommand(options: {
 
         if (options.tag) {
           conditions.push(`${tagsField}.contains("${options.tag}")`);
+        }
+
+        if (options.context) {
+          conditions.push(`${contextsField}.contains("${options.context}")`);
+        }
+
+        if (options.project) {
+          conditions.push(`${projectsField}.contains("${options.project}")`);
         }
 
         if (options.due) {
@@ -163,4 +181,70 @@ export async function listCommand(options: {
     showError((err as Error).message);
     process.exit(1);
   }
+}
+
+/**
+ * Property name to field mapping for fluent filter syntax.
+ * Maps user-friendly names to FieldRole names.
+ */
+const FILTER_PROPERTY_MAP: Record<string, FieldRole> = {
+  status: "status",
+  priority: "priority",
+  tags: "tags",
+  tag: "tags",
+  contexts: "contexts",
+  context: "contexts",
+  projects: "projects",
+  project: "projects",
+  due: "due",
+  scheduled: "scheduled",
+  title: "title",
+  estimate: "timeEstimate",
+};
+
+/**
+ * Properties that are arrays and should use .contains() instead of ==.
+ */
+const ARRAY_PROPERTIES = new Set(["tags", "contexts", "projects"]);
+
+/**
+ * Parse a fluent filter expression into mdbase where conditions.
+ *
+ * Supports: "property:value", "property:value AND property:value"
+ * Array properties (tags, contexts, projects) use .contains(),
+ * scalar properties use ==.
+ *
+ * Examples:
+ *   "priority:high"
+ *   "status:open AND tags:bug"
+ *   "contexts:work AND priority:high"
+ *   "projects:Blog"
+ */
+function parseFluentFilter(filter: string, mapping: FieldMapping): string[] {
+  const conditions: string[] = [];
+  const parts = filter.split(/\s+AND\s+/i);
+
+  for (const part of parts) {
+    const trimmed = part.trim();
+    const colonIndex = trimmed.indexOf(":");
+    if (colonIndex === -1) continue;
+
+    const property = trimmed.slice(0, colonIndex).trim().toLowerCase();
+    const value = trimmed.slice(colonIndex + 1).trim();
+    if (!value) continue;
+
+    const role = FILTER_PROPERTY_MAP[property];
+    if (!role) continue;
+
+    const field = resolveField(mapping, role);
+    const escaped = value.replace(/"/g, '\\"');
+
+    if (ARRAY_PROPERTIES.has(property) || ARRAY_PROPERTIES.has(role)) {
+      conditions.push(`${field}.contains("${escaped}")`);
+    } else {
+      conditions.push(`${field} == "${escaped}"`);
+    }
+  }
+
+  return conditions;
 }

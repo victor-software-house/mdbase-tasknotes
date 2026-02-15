@@ -1,6 +1,7 @@
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { showError, showSuccess } from "../format.js";
 import { normalizeFrontmatter, denormalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
+import { localISOString } from "../mapper.js";
 
 export async function updateCommand(
   pathOrTitle: string,
@@ -69,6 +70,8 @@ export async function updateCommand(
         showError("No fields to update. Use flags like --status, --priority, --due, etc.");
         process.exit(1);
       }
+
+      fields.dateModified = localISOString();
 
       const result = await collection.update({
         path: taskPath,
