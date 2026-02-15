@@ -1,12 +1,15 @@
 {
-  "name": "mdbase-tasknotes",
-  "version": "0.2.0",
+  "name": "@victor-software-house/mdbase-tasknotes",
+  "version": "0.2.1",
   "description": "Standalone CLI for managing markdown tasks via mdbase",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/callumalpass/mdbase-tasknotes.git"
+    "url": "git+https://github.com/victor-software-house/mdbase-tasknotes.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
   },
   "keywords": [
     "mdbase",
@@ -18,7 +21,7 @@
     "productivity"
   ],
   "bin": {
-    "mtn": "./dist/cli.js"
+    "mtn": "dist/cli.js"
   },
   "files": [
     "dist",
