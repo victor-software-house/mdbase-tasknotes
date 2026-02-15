@@ -27,12 +27,10 @@ export async function createParser(flagPath?: string): Promise<NaturalLanguagePa
   // Build StatusConfig from status enum values
   const statusConfigs: StatusConfig[] = [];
   const statusField = fields[mapping.roleToField.status];
+  const completedSet = new Set(mapping.completedStatuses);
   if (statusField?.values) {
     statusField.values.forEach((value: string, index: number) => {
-      const isCompleted =
-        value.includes("done") ||
-        value.includes("complete") ||
-        value.includes("cancelled");
+      const isCompleted = completedSet.has(value);
       statusConfigs.push({
         id: value,
         value,

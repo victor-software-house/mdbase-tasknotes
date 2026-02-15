@@ -3,6 +3,7 @@ import { format, parseISO, differenceInMinutes } from "date-fns";
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { formatDuration, showError, showSuccess, showInfo } from "../format.js";
 import { normalizeFrontmatter, denormalizeFrontmatter } from "../field-mapping.js";
+import { getCurrentDateString } from "../date.js";
 import type { TimeEntry, TaskResult, TaskFrontmatter } from "../types.js";
 
 export async function timerStartCommand(
@@ -205,7 +206,7 @@ export async function timerLogCommand(
         filtered = filtered.filter((e) => e.entry.startTime <= options.to! + "T23:59:59");
       }
       if (options.period === "today") {
-        const today = format(new Date(), "yyyy-MM-dd");
+        const today = getCurrentDateString();
         filtered = filtered.filter((e) => e.entry.startTime.startsWith(today));
       } else if (options.period === "week") {
         const weekAgo = new Date();

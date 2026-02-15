@@ -1,8 +1,8 @@
 import chalk from "chalk";
-import { format, parseISO, isPast } from "date-fns";
 import { withCollection } from "../collection.js";
 import { formatDuration, showError } from "../format.js";
-import { normalizeFrontmatter } from "../field-mapping.js";
+import { normalizeFrontmatter, isCompletedStatus } from "../field-mapping.js";
+import { getCurrentDateString, isBeforeDateSafe } from "../date.js";
 import type { TaskResult, TaskFrontmatter } from "../types.js";
 
 export async function statsCommand(
@@ -42,19 +42,17 @@ export async function statsCommand(
       }
 
       // Overdue
-      const today = format(new Date(), "yyyy-MM-dd");
+      const today = getCurrentDateString();
       const overdue = tasks.filter(
         (t) =>
           t.frontmatter.due &&
-          t.frontmatter.due < today &&
-          t.frontmatter.status !== "done" &&
-          t.frontmatter.status !== "cancelled",
+          isBeforeDateSafe(t.frontmatter.due, today) &&
+          !isCompletedStatus(mapping, t.frontmatter.status),
       ).length;
 
       // Completion rate
-      const done = byStatus.get("done") || 0;
-      const cancelled = byStatus.get("cancelled") || 0;
-      const completionRate = Math.round(((done + cancelled) / total) * 100);
+      const completedCount = tasks.filter((t) => isCompletedStatus(mapping, t.frontmatter.status)).length;
+      const completionRate = Math.round((completedCount / total) * 100);
 
       // Time tracked
       let totalMinutes = 0;
