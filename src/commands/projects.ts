@@ -98,7 +98,7 @@ async function resolveProjectName(
 
         if (targetFm) {
           const display =
-            resolveDisplayTitle(targetFm, mapping) ||
+            resolveDisplayTitle(targetFm, mapping, resolvedPath) ||
             (typeof targetFm.title === "string" ? targetFm.title : undefined) ||
             basename(resolvedPath, ".md");
 
@@ -161,7 +161,7 @@ export async function projectsListCommand(
       const rawTasks = (result.results || []) as TaskResult[];
       const tasks = rawTasks.map((t) => {
         const fm = normalizeFrontmatter(t.frontmatter as Record<string, unknown>, mapping);
-        const displayTitle = resolveDisplayTitle(fm, mapping);
+        const displayTitle = resolveDisplayTitle(fm, mapping, t.path);
         if (displayTitle) {
           fm.title = displayTitle;
         }
@@ -245,7 +245,7 @@ export async function projectsShowCommand(
       const rawTasks = (result.results || []) as TaskResult[];
       const tasks = rawTasks.map((t) => {
         const fm = normalizeFrontmatter(t.frontmatter as Record<string, unknown>, mapping);
-        const displayTitle = resolveDisplayTitle(fm, mapping);
+        const displayTitle = resolveDisplayTitle(fm, mapping, t.path);
         if (displayTitle) {
           fm.title = displayTitle;
         }

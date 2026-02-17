@@ -1,6 +1,6 @@
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { showError, showSuccess } from "../format.js";
-import { normalizeFrontmatter, denormalizeFrontmatter } from "../field-mapping.js";
+import { normalizeFrontmatter, denormalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
 
 export async function archiveCommand(
   pathOrTitle: string,
@@ -17,10 +17,11 @@ export async function archiveCommand(
       }
 
       const fm = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping);
+      const taskTitle = resolveDisplayTitle(fm, mapping, taskPath) || taskPath;
       const tags = Array.isArray(fm.tags) ? [...(fm.tags as string[])] : [];
 
       if (tags.includes("archive")) {
-        showSuccess(`Task "${fm.title}" is already archived.`);
+        showSuccess(`Task "${taskTitle}" is already archived.`);
         return;
       }
 
@@ -36,7 +37,7 @@ export async function archiveCommand(
         process.exit(1);
       }
 
-      showSuccess(`Archived: ${fm.title}`);
+      showSuccess(`Archived: ${taskTitle}`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);

@@ -2,7 +2,7 @@ import chalk from "chalk";
 import { withCollection } from "../collection.js";
 import { formatTask, showError } from "../format.js";
 import { extractProjectNames } from "../mapper.js";
-import { normalizeFrontmatter } from "../field-mapping.js";
+import { normalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
 import type { TaskResult } from "../types.js";
 
 export async function searchCommand(
@@ -29,6 +29,10 @@ export async function searchCommand(
       const scored = tasks
         .map((task) => {
           const fm = normalizeFrontmatter(task.frontmatter as Record<string, unknown>, mapping);
+          const displayTitle = resolveDisplayTitle(fm, mapping, task.path);
+          if (displayTitle) {
+            fm.title = displayTitle;
+          }
           let score = 0;
 
           const title = ((fm.title as string) || "").toLowerCase();

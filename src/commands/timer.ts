@@ -50,7 +50,8 @@ export async function timerStartCommand(
         process.exit(1);
       }
 
-      showSuccess(`Timer started for: ${fm.title}`);
+      const taskTitle = resolveDisplayTitle(fm, mapping, taskPath) || taskPath;
+      showSuccess(`Timer started for: ${taskTitle}`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
@@ -113,7 +114,8 @@ export async function timerStopCommand(
         process.exit(1);
       }
 
-      showSuccess(`Timer stopped for: ${task.frontmatter.title} (${formatDuration(duration)})`);
+      const taskTitle = resolveDisplayTitle(task.frontmatter, mapping, task.path) || task.path;
+      showSuccess(`Timer stopped for: ${taskTitle} (${formatDuration(duration)})`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);
@@ -143,8 +145,9 @@ export async function timerStatusCommand(
         const running = entries.find((e) => e.startTime && !e.endTime);
         if (running) {
           const elapsed = differenceInMinutes(new Date(), parseISO(running.startTime));
+          const taskTitle = resolveDisplayTitle(task.frontmatter, mapping, task.path) || task.path;
           console.log(
-            `${chalk.green("●")} ${resolveDisplayTitle(task.frontmatter, mapping) || task.path} — ${formatDuration(elapsed)} elapsed` +
+            `${chalk.green("●")} ${taskTitle} — ${formatDuration(elapsed)} elapsed` +
               (running.description ? chalk.dim(` (${running.description})`) : ""),
           );
           found = true;
@@ -189,7 +192,7 @@ export async function timerLogCommand(
         for (const entry of entries) {
           if (!entry.endTime) continue; // Skip running timers
           allEntries.push({
-            taskTitle: resolveDisplayTitle(task.frontmatter, mapping) || task.path,
+            taskTitle: resolveDisplayTitle(task.frontmatter, mapping, task.path) || task.path,
             taskPath: task.path,
             entry,
           });

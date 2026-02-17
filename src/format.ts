@@ -1,5 +1,6 @@
 import chalk from "chalk";
 import { format as fmtDate, isPast, parseISO, differenceInMinutes } from "date-fns";
+import { basename } from "node:path";
 import type { TaskFrontmatter, TaskResult } from "./types.js";
 import { extractProjectNames } from "./mapper.js";
 import { getCurrentDateString, isSameDateSafe, parseDateToLocal } from "./date.js";
@@ -79,7 +80,7 @@ export function formatTaskForDate(task: TaskResult, date: string): string {
   }
 
   // Title
-  parts.push(fm.title);
+  parts.push(resolveTaskTitle(task));
 
   // Due date
   if (fm.due) {
@@ -131,7 +132,7 @@ function formatTaskDetailInternal(task: TaskResult, asOfDate: string): string {
 
   // Header
   lines.push(
-    `${getStatusIcon(effectiveStatus)} ${chalk.bold(fm.title)}`,
+    `${getStatusIcon(effectiveStatus)} ${chalk.bold(resolveTaskTitle(task))}`,
   );
   lines.push(chalk.dim("─".repeat(60)));
 
@@ -232,4 +233,13 @@ function getEffectiveStatus(fm: TaskFrontmatter, date = todayString()): string {
 
 function todayString(): string {
   return getCurrentDateString();
+}
+
+function resolveTaskTitle(task: TaskResult): string {
+  const raw = task.frontmatter?.title;
+  if (typeof raw === "string" && raw.trim().length > 0) {
+    return raw;
+  }
+  const fromPath = basename(task.path, ".md").trim();
+  return fromPath.length > 0 ? fromPath : task.path;
 }

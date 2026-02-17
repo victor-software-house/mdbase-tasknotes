@@ -1,6 +1,6 @@
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { formatTaskDetailForDate, showError } from "../format.js";
-import { normalizeFrontmatter } from "../field-mapping.js";
+import { normalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
 import type { TaskResult } from "../types.js";
 import { validateDateString } from "../date.js";
 
@@ -20,6 +20,10 @@ export async function showCommand(
       }
 
       const fm = normalizeFrontmatter(result.frontmatter as Record<string, unknown>, mapping);
+      const displayTitle = resolveDisplayTitle(fm, mapping, taskPath);
+      if (displayTitle) {
+        fm.title = displayTitle;
+      }
 
       const task: TaskResult = {
         path: taskPath,

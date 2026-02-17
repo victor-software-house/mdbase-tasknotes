@@ -124,6 +124,10 @@ export async function listCommand(options: {
       if (options.json) {
         const clean = tasks.map((t: any) => {
           const fm = normalizeFrontmatter(t.frontmatter as Record<string, unknown>, mapping);
+          const displayTitle = resolveDisplayTitle(fm, mapping, t.path);
+          if (displayTitle) {
+            fm.title = displayTitle;
+          }
           return {
             path: t.path,
             ...fm,
@@ -140,7 +144,7 @@ export async function listCommand(options: {
 
       for (const task of tasks) {
         const fm = normalizeFrontmatter(task.frontmatter as Record<string, unknown>, mapping);
-        const displayTitle = resolveDisplayTitle(fm, mapping);
+        const displayTitle = resolveDisplayTitle(fm, mapping, task.path);
         if (displayTitle) {
           fm.title = displayTitle;
         }

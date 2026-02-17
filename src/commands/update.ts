@@ -1,6 +1,6 @@
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { showError, showSuccess } from "../format.js";
-import { normalizeFrontmatter, denormalizeFrontmatter } from "../field-mapping.js";
+import { normalizeFrontmatter, denormalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
 
 export async function updateCommand(
   pathOrTitle: string,
@@ -28,6 +28,7 @@ export async function updateCommand(
       }
 
       const fm = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping);
+      const taskTitle = resolveDisplayTitle(fm, mapping, taskPath) || taskPath;
       const fields: Record<string, unknown> = {};
 
       if (options.status) fields.status = options.status;
@@ -79,7 +80,7 @@ export async function updateCommand(
         process.exit(1);
       }
 
-      showSuccess(`Updated: ${fm.title || taskPath}`);
+      showSuccess(`Updated: ${taskTitle}`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);

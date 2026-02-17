@@ -1,6 +1,6 @@
 import { withCollection, resolveTaskPath } from "../collection.js";
 import { showError, showSuccess } from "../format.js";
-import { normalizeFrontmatter, denormalizeFrontmatter } from "../field-mapping.js";
+import { normalizeFrontmatter, denormalizeFrontmatter, resolveDisplayTitle } from "../field-mapping.js";
 import { recalculateRecurringSchedule } from "../recurrence.js";
 import { resolveDateOrToday } from "../date.js";
 
@@ -33,6 +33,7 @@ async function setSkipState(
       }
 
       const fm = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping);
+      const taskTitle = resolveDisplayTitle(fm, mapping, taskPath) || taskPath;
       if (typeof fm.recurrence !== "string" || fm.recurrence.trim().length === 0) {
         showError("Skip/unskip is only supported for recurring tasks.");
         process.exit(1);
@@ -48,11 +49,11 @@ async function setSkipState(
 
       const alreadySkipped = skippedInstances.includes(targetDate);
       if (options.skip && alreadySkipped) {
-        showSuccess(`Recurring instance already skipped on ${targetDate}: ${fm.title}`);
+        showSuccess(`Recurring instance already skipped on ${targetDate}: ${taskTitle}`);
         return;
       }
       if (!options.skip && !alreadySkipped) {
-        showSuccess(`Recurring instance already unskipped on ${targetDate}: ${fm.title}`);
+        showSuccess(`Recurring instance already unskipped on ${targetDate}: ${taskTitle}`);
         return;
       }
 
@@ -97,7 +98,7 @@ async function setSkipState(
 
       const verb = options.skip ? "Skipped" : "Unskipped";
       const nextInfo = schedule.nextScheduled ? ` → next ${schedule.nextScheduled}` : "";
-      showSuccess(`${verb} recurring instance (${targetDate}): ${fm.title}${nextInfo}`);
+      showSuccess(`${verb} recurring instance (${targetDate}): ${taskTitle}${nextInfo}`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);

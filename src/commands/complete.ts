@@ -5,6 +5,7 @@ import {
   denormalizeFrontmatter,
   getDefaultCompletedStatus,
   isCompletedStatus,
+  resolveDisplayTitle,
 } from "../field-mapping.js";
 import { completeRecurringTask } from "../recurrence.js";
 import { resolveDateOrToday } from "../date.js";
@@ -24,11 +25,12 @@ export async function completeCommand(
       }
 
       const fm = normalizeFrontmatter(read.frontmatter as Record<string, unknown>, mapping);
+      const taskTitle = resolveDisplayTitle(fm, mapping, taskPath) || taskPath;
       const isRecurring = typeof fm.recurrence === "string" && fm.recurrence.trim().length > 0;
       const completionStatus = getDefaultCompletedStatus(mapping);
 
       if (!isRecurring && isCompletedStatus(mapping, typeof fm.status === "string" ? fm.status : undefined)) {
-        showSuccess(`Task "${fm.title}" is already completed.`);
+        showSuccess(`Task "${taskTitle}" is already completed.`);
         return;
       }
 
@@ -38,7 +40,7 @@ export async function completeCommand(
           ? (fm.completeInstances as string[])
           : [];
         if (completeInstances.includes(today)) {
-          showSuccess(`Recurring instance already completed on ${today}: ${fm.title}`);
+          showSuccess(`Recurring instance already completed on ${today}: ${taskTitle}`);
           return;
         }
 
@@ -78,7 +80,7 @@ export async function completeCommand(
             process.exit(1);
           }
 
-          showSuccess(`Completed: ${fm.title}`);
+          showSuccess(`Completed: ${taskTitle}`);
           return;
         }
 
@@ -103,7 +105,7 @@ export async function completeCommand(
           process.exit(1);
         }
 
-        showSuccess(`Completed recurring instance: ${fm.title} → next ${recurring.nextScheduled}`);
+        showSuccess(`Completed recurring instance: ${taskTitle} → next ${recurring.nextScheduled}`);
         return;
       }
 
@@ -120,7 +122,7 @@ export async function completeCommand(
         process.exit(1);
       }
 
-      showSuccess(`Completed: ${fm.title}`);
+      showSuccess(`Completed: ${taskTitle}`);
     }, options.path);
   } catch (err) {
     showError((err as Error).message);

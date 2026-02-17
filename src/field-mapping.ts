@@ -1,4 +1,5 @@
 import { loadConfig, getType } from "@callumalpass/mdbase";
+import { basename } from "node:path";
 import { resolveCollectionPath } from "./config.js";
 
 export type FieldRole =
@@ -238,6 +239,7 @@ export function resolveField(mapping: FieldMapping, role: FieldRole): string {
 export function resolveDisplayTitle(
   frontmatter: Record<string, unknown>,
   mapping: FieldMapping,
+  taskPath?: string,
 ): string | undefined {
   const mappedKey = mapping.fieldToRole[mapping.displayNameKey] === "title"
     ? "title"
@@ -248,6 +250,13 @@ export function resolveDisplayTitle(
     const value = frontmatter[key];
     if (typeof value === "string" && value.trim().length > 0) {
       return value;
+    }
+  }
+
+  if (typeof taskPath === "string" && taskPath.trim().length > 0) {
+    const fromPath = basename(taskPath, ".md").trim();
+    if (fromPath.length > 0) {
+      return fromPath;
     }
   }
 

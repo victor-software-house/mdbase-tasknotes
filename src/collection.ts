@@ -1,4 +1,5 @@
 import { Collection } from "@callumalpass/mdbase";
+import { basename } from "node:path";
 import { resolveCollectionPath } from "./config.js";
 import { type FieldMapping, loadFieldMapping, resolveField } from "./field-mapping.js";
 
@@ -41,35 +42,38 @@ export async function resolveTaskPath(
   const escaped = query.replace(/"/g, '\\"');
 
   // Try exact title match
-  const exact = await collection.query({
-    types: ["task"],
-    where: `${titleField} == "${escaped}"`,
-    limit: 20,
-  });
+  const exact = await queryTasks(collection, `${titleField} == "${escaped}"`, 20);
 
-  if (exact.results && exact.results.length === 1) {
-    return exact.results[0].path;
+  if (exact.length === 1) {
+    return exact[0].path;
   }
-  if (exact.results && exact.results.length > 1) {
-    throw new Error(formatAmbiguousTaskError(query, exact.results as TaskQueryResult[], titleField));
+  if (exact.length > 1) {
+    throw new Error(formatAmbiguousTaskError(query, exact, titleField));
   }
 
-  // Try contains match
-  const fuzzy = await collection.query({
-    types: ["task"],
-    where: `${titleField}.contains("${escaped}")`,
-    limit: 20,
-  });
-
-  if (fuzzy.results && fuzzy.results.length === 1) {
-    return fuzzy.results[0].path;
+  // Fallback for filename-based title mode
+  const exactBasename = await queryTasks(collection, `file.basename == "${escaped}"`, 20);
+  if (exactBasename.length === 1) {
+    return exactBasename[0].path;
+  }
+  if (exactBasename.length > 1) {
+    throw new Error(formatAmbiguousTaskError(query, exactBasename, titleField));
   }
 
-  if (fuzzy.results && fuzzy.results.length > 1) {
+  // Try fuzzy title/basename match
+  const fuzzyTitle = await queryTasks(collection, `${titleField}.contains("${escaped}")`, 20);
+  const fuzzyBasename = await queryTasks(collection, `file.basename.contains("${escaped}")`, 20);
+  const fuzzy = dedupeByPath([...fuzzyTitle, ...fuzzyBasename]);
+
+  if (fuzzy.length === 1) {
+    return fuzzy[0].path;
+  }
+
+  if (fuzzy.length > 1) {
     throw new Error(
       formatAmbiguousTaskError(
         query,
-        rankCandidates(query, fuzzy.results as TaskQueryResult[], titleField),
+        rankCandidates(query, fuzzy, titleField),
         titleField,
       ),
     );
@@ -81,6 +85,34 @@ export async function resolveTaskPath(
 interface TaskQueryResult {
   path: string;
   frontmatter?: Record<string, unknown>;
+}
+
+async function queryTasks(
+  collection: Collection,
+  where: string,
+  limit: number,
+): Promise<TaskQueryResult[]> {
+  try {
+    const result = await collection.query({
+      types: ["task"],
+      where,
+      limit,
+    });
+    return (result.results || []) as TaskQueryResult[];
+  } catch {
+    return [];
+  }
+}
+
+function dedupeByPath(candidates: TaskQueryResult[]): TaskQueryResult[] {
+  const seen = new Set<string>();
+  const deduped: TaskQueryResult[] = [];
+  for (const candidate of candidates) {
+    if (seen.has(candidate.path)) continue;
+    seen.add(candidate.path);
+    deduped.push(candidate);
+  }
+  return deduped;
 }
 
 function rankCandidates(
@@ -138,7 +170,13 @@ function formatAmbiguousTaskError(
 }
 
 function getTaskTitle(candidate: TaskQueryResult, titleField: string): string {
-  if (!candidate.frontmatter || !titleField) return candidate.path;
-  const raw = candidate.frontmatter[titleField];
-  return typeof raw === "string" && raw.trim().length > 0 ? raw : candidate.path;
+  if (candidate.frontmatter && titleField) {
+    const raw = candidate.frontmatter[titleField];
+    if (typeof raw === "string" && raw.trim().length > 0) {
+      return raw;
+    }
+  }
+
+  const fromPath = basename(candidate.path, ".md").trim();
+  return fromPath.length > 0 ? fromPath : candidate.path;
 }
