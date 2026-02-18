@@ -39,6 +39,33 @@ export async function setConfig(key: string, value: string | null): Promise<void
   await save(config);
 }
 
+export async function setProjectFolder(name: string, path: string): Promise<void> {
+  const config = await load();
+  config.projectFolders ??= {};
+  config.projectFolders[name] = path;
+  await save(config);
+}
+
+export async function removeProjectFolder(name: string): Promise<boolean> {
+  const config = await load();
+  if (!config.projectFolders || !(name in config.projectFolders)) {
+    return false;
+  }
+  delete config.projectFolders[name];
+  await save(config);
+  return true;
+}
+
+export async function getProjectFolder(name: string): Promise<string | undefined> {
+  const config = await load();
+  return config.projectFolders?.[name];
+}
+
+export async function listProjectFolders(): Promise<Record<string, string>> {
+  const config = await load();
+  return config.projectFolders ?? {};
+}
+
 export function getConfigPath(): string {
   return CONFIG_FILE;
 }
