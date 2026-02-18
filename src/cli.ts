@@ -18,7 +18,12 @@ import {
 import { projectsListCommand, projectsShowCommand } from "./commands/projects.js";
 import { statsCommand } from "./commands/stats.js";
 import { interactiveCommand } from "./commands/interactive.js";
-import { configCommand } from "./commands/config.js";
+import {
+  configCommand,
+  setProjectFolderCommand,
+  removeProjectFolderCommand,
+  listProjectFoldersCommand,
+} from "./commands/config.js";
 import { skipCommand, unskipCommand } from "./commands/skip.js";
 
 const program = new Command();
@@ -253,13 +258,28 @@ program
   });
 
 // Config
-program
+const config = program
   .command("config")
   .description("Manage CLI configuration")
   .option("--set <key=value>", "Set a config value")
   .option("--get <key>", "Get a config value")
   .option("--list", "List all config values")
   .action(configCommand);
+
+config
+  .command("set-project-folder <name> <path>")
+  .description("Map a project name to a subfolder path (relative to collection)")
+  .action(setProjectFolderCommand);
+
+config
+  .command("remove-project-folder <name>")
+  .description("Remove a project folder mapping")
+  .action(removeProjectFolderCommand);
+
+config
+  .command("project-folders")
+  .description("List all project folder mappings")
+  .action(listProjectFoldersCommand);
 
 // Helper for collecting repeated options
 function collect(value: string, previous: string[]): string[] {

@@ -34,4 +34,5 @@ export interface TaskResult {
 export interface CLIConfig {
   collectionPath: string | null;
   language: string;
+  projectFolders?: Record<string, string>;
 }
