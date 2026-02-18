@@ -3,9 +3,24 @@ import {
   NaturalLanguageParserCore,
   type StatusConfig,
   type PriorityConfig,
+  type NLPTriggersConfig,
 } from "tasknotes-nlp-core";
 import { resolveCollectionPath } from "./config.js";
 import { buildFieldMapping } from "./field-mapping.js";
+
+/**
+ * CLI trigger config: all triggers enabled including ! for priority.
+ * The upstream default disables the priority trigger, but mtn uses it.
+ */
+const CLI_TRIGGERS: NLPTriggersConfig = {
+  triggers: [
+    { propertyId: "tags", trigger: "#", enabled: true },
+    { propertyId: "contexts", trigger: "@", enabled: true },
+    { propertyId: "projects", trigger: "+", enabled: true },
+    { propertyId: "status", trigger: "*", enabled: true },
+    { propertyId: "priority", trigger: "!", enabled: true },
+  ],
+};
 
 export async function createParser(flagPath?: string): Promise<NaturalLanguageParserCore> {
   const collectionPath = await resolveCollectionPath(flagPath);
@@ -59,5 +74,5 @@ export async function createParser(flagPath?: string): Promise<NaturalLanguagePa
     });
   }
 
-  return new NaturalLanguageParserCore(statusConfigs, priorityConfigs, true, "en");
+  return new NaturalLanguageParserCore(statusConfigs, priorityConfigs, true, "en", CLI_TRIGGERS);
 }
